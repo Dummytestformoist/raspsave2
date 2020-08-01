@@ -56,12 +56,9 @@ class Motor:
         0 - stop and 100 - maximum speed
         '''    
         print("Forward")
-        if self.testMode:
-            self.arrow.on()
-        else:
-            self.PWM.ChangeDutyCycle(speed)
-            GPIO.output(self.pins['f'],GPIO.HIGH)
-            GPIO.output(self.pins['r'],GPIO.LOW)
+        self.PWM.ChangeDutyCycle(speed)
+        GPIO.output(self.pins['f'],GPIO.HIGH)
+        GPIO.output(self.pins['r'],GPIO.LOW)
 
     def reverse(self,speed):
         ''' Starts the motor turning in its configured "reverse" direction.
@@ -71,12 +68,10 @@ class Motor:
         0 - stop and 100 - maximum speed
      '''
         print("Reverse")
-        if self.testMode:
-            self.arrow.off()
-        else:
-            self.PWM.ChangeDutyCycle(speed)
-            GPIO.output(self.pins['f'],GPIO.LOW)
-            GPIO.output(self.pins['r'],GPIO.HIGH)
+        
+        self.PWM.ChangeDutyCycle(speed)
+        GPIO.output(self.pins['f'],GPIO.LOW)
+        GPIO.output(self.pins['r'],GPIO.HIGH)
 
     def stop(self):
         ''' Stops power to the motor,
@@ -276,24 +271,3 @@ class Sensor:
             GPIO.setup(self.config["trigger"],GPIO.OUT)
         GPIO.setup(self.config["echo"],GPIO.IN) 
 
-class Arrow():
-    ''' Defines an object for controlling one of the LED arrows on the Motorshield.
-    
-        Arguments:
-        which = integer label for each arrow. The arrow number if arbitrary starting with:
-            1 = Arrow closest to the Motorshield's power pins and running clockwise round the board
-            ...
-            4 = Arrow closest to the motor pins.
-    '''
-    arrowpins={1:33,2:35,3:37,4:36}
-
-    def __init__(self, which):
-        self.pin = self.arrowpins[which]
-        GPIO.setup(self.pin,GPIO.OUT)
-        GPIO.output(self.pin, GPIO.LOW)
-
-    def on(self):
-        GPIO.output(self.pin,GPIO.HIGH)
-
-    def off(self):
-        GPIO.output(self.pin,GPIO.LOW)

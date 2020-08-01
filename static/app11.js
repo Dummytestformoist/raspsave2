@@ -1,6 +1,6 @@
-$(document).ready(function () {
 
-    var socket = io.connect('http://' + document.domain + ':' + location.port);
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+$(document).ready(function () {
 
     socket.on('StatusUpdate', function (msg) {
         console.log("Received UpdateStatus");
@@ -27,7 +27,6 @@ $(document).ready(function () {
 });
 
 $("#AW").on('change', function () {
-	var socket = io.connect('http://' + document.domain + ':' + location.port);
     if ($(this).is(':checked')) {
 	socket.emit('client', {"data": "auto_checked"});
 
@@ -38,7 +37,7 @@ $("#AW").on('change', function () {
 });
 
 $("#MW").on('change', function () {
-	var socket = io.connect('http://' + document.domain + ':' + location.port);
+
     if ($(this).is(':checked')) {
 	socket.emit('client', {"data": "manual_checked"});
     }

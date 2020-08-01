@@ -27,29 +27,37 @@ m4 = PiMotor.Motor("MOTOR4", 1)
 motors = (m1, m2, m3, m4)
 
 # Setting Up Sensors
+'''
+{"MOTOR4":{"config":{1:{"e":32,"f":24,"r":26},2:{"e":32,"f":26,"r":24}},"arrow":1},
+ "MOTOR3":{"config":{1:{"e":19,"f":21,"r":23},2:{"e":19,"f":23,"r":21}}, "arrow":2},
+ "MOTOR2":{"config":{1:{"e":22,"f":16,"r":18},2:{"e":22,"f":18,"r":16}}, "arrow":3},
+ "MOTOR1":{"config":{1:{"e":11,"f":15,"r":13},2:{"e":11,"f":13,"r":15}},"arrow":4}}
+arrowpins={1:33,2:35,3:37,4:36}
+'''
+
 GPIO.setmode(GPIO.BOARD)
-Input_P1Sensor = 35
-Output_P1Sensor = 37
+Input_P1Sensor = 10
+# Output_P1Sensor = 37
 
 Input_P2Sensor = 29
-Output_P2Sensor = 33
+#Output_P2Sensor = 33
 
-Input_P3Sensor = 7
-Output_P3Sensor = 5
+Input_P3Sensor = 3
+Output_P3Sensor = 7
 
 Input_P4Sensor = 8
-Output_P4Sensor = 10
+Output_P4Sensor =12
 
-Input_TSensor = 36
-Output_TSensor = 38
+Input_TSensor = 5
+Output_TSensor = 40
 
 GPIO.setup(Input_P1Sensor, GPIO.IN)
-GPIO.setup(Output_P1Sensor, GPIO.OUT)
-GPIO.output(Output_P1Sensor, GPIO.HIGH)
+#GPIO.setup(Output_P1Sensor, GPIO.OUT)
+#GPIO.output(Output_P1Sensor, GPIO.HIGH)
 
 GPIO.setup(Input_P2Sensor, GPIO.IN)
-GPIO.setup(Output_P2Sensor, GPIO.OUT)
-GPIO.output(Output_P2Sensor, GPIO.HIGH)
+#GPIO.setup(Output_P2Sensor, GPIO.OUT)
+#GPIO.output(Output_P2Sensor, GPIO.HIGH)
 
 GPIO.setup(Input_P3Sensor, GPIO.IN)
 GPIO.setup(Output_P3Sensor, GPIO.OUT)
@@ -66,10 +74,10 @@ GPIO.output(Output_TSensor, GPIO.HIGH)
 p_sensors = (Input_P1Sensor, Input_P2Sensor, Input_P3Sensor, Input_P4Sensor)
 
 # Default Status of Water System
-status_of_plant1 = "Not Watering"
-status_of_plant2 = "Not Watering"
-status_of_plant3 = "Not Watering"
-status_of_plant4 = "Not Watering"
+status_of_plant1 = "Idle"
+status_of_plant2 = "Idle"
+status_of_plant3 = "Idle" 
+status_of_plant4 = "Idle"
 status_of_tank = "Unknown"
 
 # Thread for running Water System
@@ -87,7 +95,14 @@ class thread_with_exception(threading.Thread):
                     m.forward(100)
                     time.sleep(1.5)
                     m.stop()
-                    update_status(counter, "Not Watering")
+                    update_status(counter, "Idle")
+                    if GPIO.input(Input_TSensor) and status_of_tank != "Empty":
+                        printlog("Tank is Empty. Add water.")
+                        update_status(5, "Empty")
+
+                    elif status_of_tank != "Full":
+                        printlog("Tank Full")
+                        update_status(5, "Full")
 
             elif self.name == "Auto_Watering":
                 printlog("Watering Automatically")
@@ -98,12 +113,12 @@ class thread_with_exception(threading.Thread):
                             update_status(counter, "Watering")
                             motors[counter - 1].forward(100)
                         else:
-                            printlog("Not Watering Plant:" + str(counter))
-                            update_status(counter, "Not Watering")
+                            printlog("Idle Plant:" + str(counter))
+                            update_status(counter, "Idle")
                             motors[counter - 1].stop()
 
                     if GPIO.input(Input_TSensor):
-                        printlog("Tank is Empty. Adding water.")
+                        printlog("Tank is Empty. Add water.")
                         update_status(5, "Empty")
 
                     else:
@@ -182,11 +197,10 @@ def update_status(item, status="None"):
         else:
             return
     elif item == 0:
-        status_of_plant1 = "Not Watering"
-        status_of_plant2 = "Not Watering"
-        status_of_plant3 = "Not Watering"
-        status_of_plant4 = "Not Watering"
-        status_of_tank = "Full"
+        status_of_plant1 = "Idle"
+        status_of_plant2 = "Idle"
+        status_of_plant3 = "Idle"
+        status_of_plant4 = "Idle"
     elif item == 100:
         MW_status = "OFF"
     elif item == 101:
@@ -310,6 +324,13 @@ def home():
 def connect():
     print("A Client has connected")
     emit("Response", {"data": "Connected!"})
+    if GPIO.input(Input_TSensor):
+        printlog("Tank is Empty. Add water.")
+        update_status(5, "Empty")
+
+    else:
+        printlog("Tank Full")
+        update_status(5, "Full")
     emit("StatusUpdate", get_data())
 
 
@@ -326,30 +347,10 @@ def handle_request(msg):
 
 if __name__ == "__main__":
     try:
-        socketio.run(app, port =PORT)
+        socketio.run(app, host = "0.0.0.0", port = PORT)
     finally:
         printlog("Cleaning Up Pins")
         GPIO.cleanup()
 
 
 # Include:write date to file to make graph/adding checks for thread before starting thread in auto func
-
-"""
-@app.route("/data", method=["GET"])
-def data():
-    return jsonisfy(get_data())
-
-
-@app.route("/updatestatus")
-def updatestatus():
-    ws = request.environ("wsgi.websocket")
-    if not ws:
-        raise RuntimeError("Environment lacks WSGI WebSocket support")
-    if ws:
-        print("Hello")
-
-
-http_server = WSGIServer(("", PORT), app, handler_class=WebSocketHandler)
-http_server.serve_forever()
-"""
-
